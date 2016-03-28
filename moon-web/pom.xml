@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.moonframework</groupId>
+        <artifactId>moon-framework-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../moon-framework-parent/pom.xml</relativePath>
+    </parent>
+    <artifactId>moon-web</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.moonframework</groupId>
+            <artifactId>moon-model-mybatis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.moonframework</groupId>
+            <artifactId>moon-security</artifactId>
+        </dependency>
+
+        <!-- Web support packages, including client and web remoting -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <!-- REST Web Services and model-view-controller implementation for web applications -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        
+        <!-- cas接入 -->
+        <dependency>
+            <groupId>org.jasig.cas.client</groupId>
+            <artifactId>cas-client-core</artifactId>
+        </dependency>
+        
+    </dependencies>
+
+</project>

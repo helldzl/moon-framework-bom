@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="${namespace}">
+
+    <!-- result map -->
+    <resultMap id="${table.refClassName}" type="${namespace}">
+        <id property="id" column="id" javaType="long"/>
+#foreach(${column} in ${table.columns})
+#if($column.fieldName != "id")
+        <result property="${column.fieldName}" column="${column.columnName}" javaType="$!{column.dataTypeEnum.alias}"/>
+#end
+#end
+    </resultMap>
+
+    <!-- sql -->
+    <sql id="columns">
+        <choose>
+            <when test="fields != null and fields.size != 0">
+                <foreach collection="fields" separator="," item="item" index="index">
+                    ${item.fullname}
+                </foreach>
+            </when>
+            <otherwise>
+                #foreach(${column} in ${table.columns})${column.columnName}#if( $foreach.hasNext ),#end #end
+
+            </otherwise>
+        </choose>
+    </sql>
+
+    <sql id="insertColumns">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+            <if test="${column.fieldName} != null">
+                ${column.columnName},
+            </if>
+#end
+        </trim>
+    </sql>
+
+    <sql id="insertValues">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+            <if test="${column.fieldName} != null">
+                #{${column.fieldName}},
+            </if>
+#end
+        </trim>
+    </sql>
+
+    <sql id="updateValues">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+#if($column.fieldName != "id")
+            <if test="${column.fieldName} != null">
+                ${column.columnName} = #{${column.fieldName}},
+            </if>
+#end
+#end
+        </trim>
+    </sql>
+
+    <sql id="updateValuesByCriterion">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+#if($column.fieldName != "id")
+            <if test="entity.${column.fieldName} != null">
+                ${column.columnName} = #{entity.${column.fieldName}},
+            </if>
+#end
+#end
+        </trim>
+    </sql>
+
+    <sql id="simpleConditions">
+        <trim prefix="WHERE" prefixOverrides="AND">
+#foreach(${column} in ${table.columns})
+            <if test="entity.${column.fieldName} != null">
+                AND ${column.columnName} = #{entity.${column.fieldName}}
+            </if>
+#end
+        </trim>
+    </sql>
+
+    <sql id="sort">
+        <trim prefix="ORDER BY" suffixOverrides=",">
+            <foreach collection="orders" separator="," item="item" index="index">
+                ${item.property} ${item.direction}
+            </foreach>
+        </trim>
+    </sql>
+
+    <sql id="criterion">
+        <foreach collection="conditions.tokens" item="item">
+            <choose>
+                <when test="item.param">#{item.value}</when><otherwise>${item.value}</otherwise>
+            </choose>
+        </foreach>
+    </sql>
+
+    <sql id="limit">
+        LIMIT #{offset}, #{pageSize}
+    </sql>
+
+    <!-- insert -->
+    <insert id="save" parameterType="${namespace}" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO ${table.tableName}(<include refid="insertColumns"/>) VALUES (<include refid="insertValues"/>)
+    </insert>
+
+    <!-- insert into on duplicate -->
+    <insert id="saveOrUpdate" parameterType="${namespace}" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO ${table.tableName}(<include refid="insertColumns"/>) VALUES (<include refid="insertValues"/>) ON DUPLICATE KEY UPDATE <include refid="updateValues"/>
+    </insert>
+
+    <!-- delete -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM ${table.tableName} WHERE id = #{id}
+    </delete>
+
+    <!-- update -->
+    <update id="update" parameterType="${namespace}">
+        UPDATE ${table.tableName} SET <include refid="updateValues"/> WHERE id = #{id}
+    </update>
+
+    <update id="updateByCriterion" parameterType="${namespace}">
+        UPDATE ${table.tableName} SET <include refid="updateValuesByCriterion"/> WHERE id = #{entity.id} AND <include refid="criterion"></include>
+    </update>
+
+    <!-- select -->
+    <select id="findOne" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} WHERE id = #{id}
+    </select>
+
+    <select id="findOneByObject" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} <include refid="simpleConditions"></include>
+    </select>
+
+    <select id="findAll" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} WHERE ${field} IN
+        <foreach collection="ids" open="(" separator="," close=")" index="index" item="item" >
+            ${item}
+        </foreach>
+    </select>
+
+    <select id="findAllByObject" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} <include refid="simpleConditions"></include>
+    </select>
+
+    <select id="findAllByCriterion" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} WHERE <include refid="criterion"></include>
+    </select>
+
+    <select id="findPage" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} <include refid="simpleConditions"></include> <include refid="sort"></include> <include refid="limit"></include>
+    </select>
+
+    <select id="findPageByCriterion" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} WHERE <include refid="criterion"></include> <include refid="sort"></include> <include refid="limit"></include>
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM ${table.tableName}
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="long">
+        SELECT COUNT(*) FROM ${table.tableName} <include refid="simpleConditions"></include>
+    </select>
+
+    <select id="countByCriterion" parameterType="map" resultType="long">
+        SELECT COUNT(*) FROM ${table.tableName} WHERE <include refid="criterion"></include>
+    </select>
+
+    <select id="exists" parameterType="long" resultType="long">
+        SELECT COUNT(*) FROM ${table.tableName} WHERE id = #{id}
+    </select>
+
+</mapper>

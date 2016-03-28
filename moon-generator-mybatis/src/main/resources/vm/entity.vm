@@ -1,0 +1,52 @@
+package ${packageName};
+
+#if(${baseClassName})
+import ${baseClassName};
+#end
+#foreach( ${import} in ${table.imports} )
+import ${import.qualifiedName};
+#end
+
+/**
+ * @author ${user}
+ * @version 1.0
+ * @since ${date}
+ */
+public class ${table.className}#if(${parentClass}) extends ${parentClass}#end {
+
+    public static final String TABLE_NAME = "${table.tableName}";
+
+#foreach( ${column} in ${columns} )
+    public static final String ${column.UpperCaseColumnName} = "${column.columnName}";
+#end
+
+    private static final long serialVersionUID = ${serial}L;
+
+#foreach( ${column} in ${columns} )
+    private ${column.javaType} ${column.fieldName};
+#end
+
+    public ${table.className}() {
+    }
+
+    public ${table.className}(Long id) {
+        super(id);
+    }
+
+#foreach( ${column} in ${columns} )
+    /**
+     * @return ${column.columnComment}
+     */
+    public ${column.javaType} get${column.methodName}() {
+        return ${column.fieldName};
+    }
+
+    /**
+     * @param ${column.fieldName} ${column.columnComment}
+     */
+    public void set${column.methodName}(${column.javaType} ${column.fieldName}) {
+        this.${column.fieldName} = ${column.fieldName};
+    }
+#end
+
+}
