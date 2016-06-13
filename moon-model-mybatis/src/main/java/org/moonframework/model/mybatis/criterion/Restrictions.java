@@ -187,7 +187,7 @@ public class Restrictions {
     }
 
     /**
-     * <p>Return the conjuction of two expressions</p>
+     * <p>Return the conjunction of two expressions</p>
      *
      * @param lhs One expression
      * @param rhs The other expression
@@ -198,7 +198,7 @@ public class Restrictions {
     }
 
     /**
-     * <p>Return the conjuction of multiple expressions</p>
+     * <p>Return the conjunction of multiple expressions</p>
      *
      * @param predicates The predicates making up the initial junction
      * @return The conjunction
