@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream;
 /**
  * @author quzile
  */
-public class Convertion {
+public class Conversion {
 
     public static Object byteArrayToObject(byte[] buffer) throws Exception {
         ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(buffer));
