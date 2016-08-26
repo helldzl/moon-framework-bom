@@ -9,6 +9,10 @@ import java.util.Map;
  */
 public class Restrictions {
 
+    public static SimpleExpression bitand(QueryField queryField, Object value) {
+        return new SimpleExpression(queryField.toString(), value, "&");
+    }
+
     public static SimpleExpression eq(QueryField queryField, Object value) {
         return new SimpleExpression(queryField.toString(), value, "=");
     }
@@ -31,6 +35,19 @@ public class Restrictions {
 
     public static SimpleExpression ge(QueryField queryField, Object value) {
         return new SimpleExpression(queryField.toString(), value, ">=");
+    }
+
+    //
+
+    /**
+     * <p>Apply an "&" constraint to the named property</p>
+     *
+     * @param propertyName The name of the property
+     * @param value        The value to use in comparison
+     * @return SimpleExpression
+     */
+    public static SimpleExpression bitand(String propertyName, Object value) {
+        return new SimpleExpression(propertyName, value, "&");
     }
 
     /**
@@ -187,7 +204,7 @@ public class Restrictions {
     }
 
     /**
-     * <p>Return the conjunction of two expressions</p>
+     * <p>Return the conjuction of two expressions</p>
      *
      * @param lhs One expression
      * @param rhs The other expression
@@ -198,7 +215,7 @@ public class Restrictions {
     }
 
     /**
-     * <p>Return the conjunction of multiple expressions</p>
+     * <p>Return the conjuction of multiple expressions</p>
      *
      * @param predicates The predicates making up the initial junction
      * @return The conjunction

@@ -15,7 +15,7 @@ import org.springframework.retry.RecoveryCallback;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetryTemplate;
-import org.moonframework.amqp.rabbit.support.Conversion;
+import org.moonframework.amqp.rabbit.support.Convertion;
 
 /**
  * <p>
@@ -194,7 +194,7 @@ public abstract class AbstractProducer<T, E extends Throwable> implements
                                                        String routingKey, M message) {
         try {
             return MessageBuilder
-                    .withBody(Conversion.objectToByteArray(message))
+                    .withBody(Convertion.objectToByteArray(message))
                     .setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN)
                     .setReceivedExchange(exchange)
                     .setReceivedRoutingKey(routingKey).build();

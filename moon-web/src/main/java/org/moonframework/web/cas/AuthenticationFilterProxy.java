@@ -6,9 +6,9 @@
  * Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a
  * copy of the License at:
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,27 +19,26 @@
 
 package org.moonframework.web.cas;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jasig.cas.client.authentication.DefaultGatewayResolverImpl;
 import org.jasig.cas.client.authentication.GatewayResolver;
 import org.jasig.cas.client.util.AbstractCasFilter;
 import org.jasig.cas.client.util.CommonUtils;
 import org.jasig.cas.client.validation.Assertion;
+import org.moonframework.model.mybatis.domain.Response;
+import org.moonframework.web.utils.CookieUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -52,7 +51,7 @@ import org.springframework.util.StringUtils;
  * <li><code>renew</code> - true/false on whether to use renew or not.</li>
  * <li><code>gateway</code> - true/false on whether to use gateway or not.</li>
  * </ul>
- *
+ * <p>
  * <p>Please see AbstractCasFilter for additional properties.</p>
  *
  * @author Scott Battaglia
@@ -62,7 +61,12 @@ import org.springframework.util.StringUtils;
 public class AuthenticationFilterProxy extends AbstractCasFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationFilterProxy.class);
-    
+
+    /**
+     * JSON Object Mapper
+     */
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * The URL to the CAS Server login.
      */
@@ -81,7 +85,7 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
      * 被忽略不被安全检查的url
      */
     private List<String> ignoralList = new ArrayList<String>();
-    
+
     private GatewayResolver gatewayStorage = new DefaultGatewayResolverImpl();
 
     protected void initInternal(final FilterConfig filterConfig) throws ServletException {
@@ -100,7 +104,7 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
                 try {
                     this.gatewayStorage = (GatewayResolver) Class.forName(gatewayStorageClass).newInstance();
                 } catch (final Exception e) {
-                    log.error(e,e);
+                    log.error(e, e);
                     throw new ServletException(e);
                 }
             }
@@ -126,8 +130,8 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
         if (!actualUrl.startsWith("/")) {
             actualUrl = "/" + actualUrl;
         }
-        
-        if(!needCheckLogin(currentUrl)){
+
+        if ((!needCheckLogin(currentUrl)) && (!hasUserCookie(request)) ) {
             LOG.info("当前请求{}匹配成功，无需登录", currentUrl);
             filterChain.doFilter(request, response);
             return;
@@ -139,14 +143,30 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
         }
 
         final String serviceUrl = constructServiceUrl(request, response);
-        final String ticket = CommonUtils.safeGetParameter(request,getArtifactParameterName());
+        final String ticket = CommonUtils.safeGetParameter(request, getArtifactParameterName());
         final boolean wasGatewayed = this.gatewayStorage.hasGatewayedAlready(request, serviceUrl);
 
         if (CommonUtils.isNotBlank(ticket) || wasGatewayed) {
             filterChain.doFilter(request, response);
             return;
-            
+
         }
+
+        // CHECK HEADER START, 如果是AJAX请求, 进行处理
+        String text = request.getHeader("x-requested-with");
+        if ("XMLHttpRequest".equals(text)) {
+            // https://tools.ietf.org/html/rfc7235#section-4.1
+            String result = objectMapper.writeValueAsString(new Response(String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), "Unauthorized"));
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("application/json;charset=utf-8");
+            response.setContentLength(result.length());
+            response.setHeader("WWW-Authenticate", "Form realm=\"user\"");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            PrintWriter out = response.getWriter();
+            out.append(result);
+            return;
+        }
+        // CHECK HEADER END
 
         final String modifiedServiceUrl;
 
@@ -172,33 +192,39 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
     }
 
     /**
-    *
-    * @Function: com.budee.qr.filter.AuthenticationFilterProxy.needCheckLogin
-    * @Description: 判断是否需要登录，返回false，无需登录
-    *
-    * @param url 当前请求的url
-    * @return 是否需要登录
-    *
-    * @version:v0.0.1
-    * @author:hongyang
-    * @date:2015年7月17日 上午10:33:39
-    *
-    */
-    private boolean needCheckLogin(String url){
-        String actualUrl = StringUtils.isEmpty(url) ? "/" : url;;
+     *
+     * @Description: 判断是否存在用户ticket信息，有返回true，无返回false
+     * @return
+     */
+    private boolean hasUserCookie(HttpServletRequest request) {
+        return CookieUtils.getCookieValue(request,"CASTGC") == null ? false : true;
+    }
+
+    /**
+     * @param url 当前请求的url
+     * @return 是否需要登录
+     * @Function: com.budee.qr.filter.AuthenticationFilterProxy.needCheckLogin
+     * @Description: 判断是否需要登录，返回false，无需登录
+     * @version:v0.0.1
+     * @author:hongyang
+     * @date:2015年7月17日 上午10:33:39
+     */
+    private boolean needCheckLogin(String url) {
+        String actualUrl = StringUtils.isEmpty(url) ? "/" : url;
+        ;
         if (!actualUrl.startsWith("/")) {
             actualUrl = "/" + actualUrl;
         }
-        
+
         for (String resource : ignoralList) {
-            if (actualUrl.startsWith(resource) || CheckLoginUtil.checkIgnoreLogin(actualUrl,resource)) {
+            if (actualUrl.startsWith(resource) || CheckLoginUtil.checkIgnoreLogin(actualUrl, resource)) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     public final void setRenew(final boolean renew) {
         this.renew = renew;
     }
@@ -210,11 +236,11 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
     public final void setCasServerLoginUrl(final String casServerLoginUrl) {
         this.casServerLoginUrl = casServerLoginUrl;
     }
-    
+
     /**
      * @param ignoralList the ignoralList to set
      */
-    
+
     public void setIgnoralList(List<String> ignoralList) {
         this.ignoralList = ignoralList;
     }
@@ -222,5 +248,5 @@ public class AuthenticationFilterProxy extends AbstractCasFilter {
     public final void setGatewayStorage(final GatewayResolver gatewayStorage) {
         this.gatewayStorage = gatewayStorage;
     }
-    
+
 }

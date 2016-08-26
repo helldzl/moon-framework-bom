@@ -1,13 +1,14 @@
 package org.moonframework.core.message;
 
+import org.moonframework.core.util.AssertUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceAware;
 import org.springframework.context.MessageSourceResolvable;
-import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author quzile
@@ -46,63 +47,71 @@ public class MessageSourceAdapter implements MessageSourceAware {
     // Assert method
 
     protected void isTrue(boolean expression) {
-        Assert.isTrue(expression);
+        AssertUtils.isTrue(expression);
     }
 
     protected void isTrue(boolean expression, String message) {
-        Assert.isTrue(expression, getMessage(message));
+        AssertUtils.isTrue(expression, () -> getMessage(message));
+    }
+
+    protected void isTrue(boolean expression, Supplier<String> supplier) {
+        AssertUtils.isTrue(expression, supplier);
     }
 
     protected void isTrue(boolean expression, String message, Object[] args) {
-        Assert.isTrue(expression, getMessage(message, args));
+        AssertUtils.isTrue(expression, () -> getMessage(message, args));
     }
 
     protected void notNull(Object object) {
-        Assert.notNull(object);
+        AssertUtils.notNull(object);
     }
 
     protected void notNull(Object object, String message) {
-        Assert.notNull(object, getMessage(message));
+        AssertUtils.notNull(object, () -> getMessage(message));
+    }
+
+    protected void notNull(Object object, Supplier<String> supplier) {
+        AssertUtils.notNull(object, supplier);
     }
 
     protected void notNull(Object object, String message, Object[] args) {
-        Assert.notNull(object, getMessage(message, args));
+        AssertUtils.notNull(object, () -> getMessage(message, args));
     }
 
     protected void notEmpty(Object[] array) {
-        Assert.notEmpty(array);
+        AssertUtils.notEmpty(array);
     }
 
     protected void notEmpty(Object[] array, String message) {
-        Assert.notEmpty(array, getMessage(message));
+        AssertUtils.notEmpty(array, () -> getMessage(message));
     }
 
     protected void notEmpty(Object[] array, String message, Object[] args) {
-        Assert.notEmpty(array, getMessage(message, args));
+        AssertUtils.notEmpty(array, () -> getMessage(message, args));
     }
 
     protected void notEmpty(Collection<?> collection) {
-        Assert.notEmpty(collection);
+        AssertUtils.notEmpty(collection);
     }
 
     protected void notEmpty(Collection<?> collection, String message) {
-        Assert.notEmpty(collection, getMessage(message));
+        AssertUtils.notEmpty(collection, () -> getMessage(message));
     }
 
     protected void notEmpty(Collection<?> collection, String message, Object[] args) {
-        Assert.notEmpty(collection, getMessage(message, args));
+        AssertUtils.notEmpty(collection, () -> getMessage(message, args));
     }
 
     protected void notEmpty(Map<?, ?> map) {
-        Assert.notEmpty(map);
+        AssertUtils.notEmpty(map);
     }
 
     protected void notEmpty(Map<?, ?> map, String message) {
-        Assert.notEmpty(map, getMessage(message));
+        AssertUtils.notEmpty(map, () -> getMessage(message));
     }
 
     protected void notEmpty(Map<?, ?> map, String message, Object[] args) {
-        Assert.notEmpty(map, getMessage(message, args));
+        AssertUtils.notEmpty(map, () -> getMessage(message, args));
     }
 
 }

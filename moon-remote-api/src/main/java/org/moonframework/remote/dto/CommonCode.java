@@ -19,7 +19,9 @@ public enum CommonCode {
     INCORRECT_CREDENTIALS(202, "密码错误"),
     DISABLED_ACCOUNT(203, "账号未激活"),
     LOCKED_ACCOUNT(204, "账号已锁定"),
-    AUTHENTICATION_EXCEPTION(205, "认证失败");
+    AUTHENTICATION_EXCEPTION(205, "认证失败"),
+    KARMA_NOTENOUGH(206,"可用积分不够,请刷新再尝试"),
+    CODES_NOTENOUGH(207,"剩余可购买次数不够，请刷新再尝试");
 
     private int code;
     private String message;

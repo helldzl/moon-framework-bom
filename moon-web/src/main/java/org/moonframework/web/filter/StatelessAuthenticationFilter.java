@@ -91,9 +91,18 @@ public class StatelessAuthenticationFilter extends AccessControlFilter {
     }
 
     /**
-     * <p>设置用户会话属性, 默认为username</p>
+     * <p>设置用户会话属性</p>
      *
-     * @param userAttribute user attribute
+     * @param idAttribute userId attribute
+     */
+    public void setIdAttribute(String idAttribute) {
+        this.idAttribute = idAttribute;
+    }
+
+    /**
+     * <p>设置用户会话属性</p>
+     *
+     * @param userAttribute username attribute
      */
     public void setUserAttribute(String userAttribute) {
         this.userAttribute = userAttribute;

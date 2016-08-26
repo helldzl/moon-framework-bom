@@ -109,8 +109,9 @@ public class RemoteServiceAdapter implements RemoteService, ApplicationContextAw
         BaseEntity entity = GenericUtils.bind(t, (Class<? extends BaseEntity>) t.getTargetClass());
 
         // Find Base Service by service name and save entity.
-        BaseService baseService = applicationContext.getBean(t.getServiceBeanName(), BaseService.class);
-        return (E) service.apply(baseService, entity);
+        BaseService<BaseEntity> baseService = applicationContext.getBean(t.getServiceBeanName(), BaseService.class);
+        E e = service.apply(baseService, entity);
+        return e;
     }
 
     @SuppressWarnings("unchecked")

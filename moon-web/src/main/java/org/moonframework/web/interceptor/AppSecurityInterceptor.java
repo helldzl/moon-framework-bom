@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.moonframework.model.mybatis.domain.Response;
+import org.moonframework.security.core.UserAuthentication;
 import org.moonframework.security.core.annotation.WebSecured;
 import org.springframework.context.MessageSource;
 import org.springframework.web.method.HandlerMethod;
@@ -17,8 +18,9 @@ import java.io.PrintWriter;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * <a href="http://docs.spring.io/spring/docs/current/spring-framework-reference/htmlsingle/#mvc-config-interceptors">interceptors</a>
@@ -69,12 +71,14 @@ public class AppSecurityInterceptor extends HandlerInterceptorAdapter {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             Method method = handlerMethod.getMethod();
 
+            String queryString = request.getQueryString();
+            String url = request.getRequestURL() + queryString == null ? "" : "?" + queryString;
+            logger.info(() -> url);
+
             boolean isPermitted = isPermitted(method, handlerMethod.getBeanType().getName() + "." + method.getName());
             // unauthorized
             if (!isPermitted) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Request is not permitted, Method : " + handlerMethod.getBeanType().getName() + "." + method.getName());
-                }
+                logger.debug(() -> "Request is not permitted, Method : " + handlerMethod.getBeanType().getName() + "." + method.getName());
 
                 String text = request.getHeader("x-requested-with");
                 if (text != null && "XMLHttpRequest".equals(text)) {
@@ -105,33 +109,71 @@ public class AppSecurityInterceptor extends HandlerInterceptorAdapter {
      */
     private boolean isPermitted(Method method, String permission) {
         // check if method or class is @WebSecured annotation present
-        Set<String> roles = new HashSet<>();
-        value(method.getDeclaringClass(), roles);
-        value(method, roles);
-        if (roles.isEmpty())
-            return true;
+        WebSecured annotation = value(method);
+        if (annotation == null)
+            annotation = value(method.getDeclaringClass());
+        if (annotation == null)
+            return true;                                                    // if none of them present @WebSecured, return true
 
-        // is authenticated
+        Set<String> roles = toSet(annotation.roles());                      // PRIORITY: HIGH
+        Set<String> permissions = toSet(annotation.permissions());          // PRIORITY: MIDDLE
+        Set<String> values = toSet(annotation.value());                     // PRIORITY: LOW
+        UserAuthentication authentication = annotation.authentication();    // TYPE
+        boolean isThrow = annotation.throwOnUnauthenticated();              // IS THROW
+
+        // check is authenticated first
         Subject currentUser = SecurityUtils.getSubject();
-        if (!currentUser.isAuthenticated())
-            return false;
+        boolean authenticated = currentUser.isAuthenticated();
 
-        // check roles or permissions
-        if (roles.size() == 1 && roles.contains(""))
+        // not authentication
+        if (isThrow && !authenticated) {
+            try {
+                throw annotation.exception().newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                logger.debug(() -> "Throw Unauthenticated Exception Error", e);
+            }
+        }
+
+        // check authentication only, or not authenticated
+        if (UserAuthentication.AUTHENTICATION_ONLY == authentication || !authenticated)
+            return authenticated;
+
+        // check roles
+        if (!roles.isEmpty())
+            return currentUser.hasAllRoles(roles);
+
+        // check permissions
+        if (!permissions.isEmpty())
+            return currentUser.isPermittedAll(permissions.toArray(new String[permissions.size()]));
+
+        // check values
+        if (values.isEmpty())
             return currentUser.isPermitted(permission);
         else
-            return currentUser.hasAllRoles(roles);
+            return currentUser.hasAllRoles(values);
+    }
+
+    private <K> Set<K> toSet(K[] array) {
+        return toSet(array, s -> !"".equals(s));
+    }
+
+    private <K> Set<K> toSet(K[] array, Predicate<? super K> predicate) {
+        return Arrays.asList(array)
+                .stream()
+                .filter(predicate)
+                .collect(Collectors.toSet());
     }
 
     /**
-     * <p>获取value集合</p>
+     * <p>获取WebSecured annotation</p>
      *
      * @param annotatedElement annotatedElement
-     * @param set              set
+     * @return WebSecured
      */
-    private void value(AnnotatedElement annotatedElement, Set<String> set) {
+    private WebSecured value(AnnotatedElement annotatedElement) {
         if (annotatedElement.isAnnotationPresent(WebSecured.class))
-            set.addAll(Arrays.asList(annotatedElement.getAnnotation(WebSecured.class).value()));
+            return annotatedElement.getAnnotation(WebSecured.class);
+        return null;
     }
 
     /**

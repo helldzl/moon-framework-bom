@@ -18,7 +18,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 @EnableCaching
 public class RedisCacheManagerAutoConfiguration {
 
-    @Bean
+    @Bean(name = "redisCacheManager")
     public CacheManager cacheManager(RedisTemplate redisTemplate) {
         return new RedisCacheManager(redisTemplate);
     }

@@ -40,12 +40,6 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
         
-        <!-- cas接入 -->
-        <dependency>
-            <groupId>org.jasig.cas.client</groupId>
-            <artifactId>cas-client-core</artifactId>
-        </dependency>
-        
     </dependencies>
 
 </project>

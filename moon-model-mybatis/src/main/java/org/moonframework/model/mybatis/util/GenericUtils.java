@@ -11,8 +11,11 @@ import java.io.IOException;
  *
  * @author quzile
  * @version 1.0
+ * @see org.moonframework.core.util.BeanUtils
  * @since 2015/12/28
+ * @deprecated use BeanUtils instead
  */
+@Deprecated
 public class GenericUtils {
 
     private static ObjectMapper mapper = new ObjectMapper();

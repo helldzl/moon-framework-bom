@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- monitorInterval="30", Automatic Reconfiguration -->
+<Configuration status="info" monitorInterval="30">
+
+    <Properties>
+        <!--<Property name="LOG_PATH">${bundle:config/application.properties:}</Property>-->
+        <!--<Property name="LOG_FILE">${bundle:config/application.properties:}</Property>-->
+        <!--<Property name="LOG_FILE_DEV">${bundle:config/application.properties:}</Property>-->
+
+        <Property name="LOG_PATH">/logs/moon</Property>
+        <Property name="LOG_FILE">app.log</Property>
+        <Property name="LOG_FILE_DEV">dev.log</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d %highlight{[%-5level]} [%replace{%X{PID}}{[A-Za-z@\.]*}{}] [%t] [%c:%L] - %msg%n"></PatternLayout>
+        </Console>
+
+        <File name="File" fileName="${LOG_PATH}/dev/${LOG_FILE}" append="false">
+            <PatternLayout
+                    pattern="%d [%-5level] [%replace{%X{PID}}{[A-Za-z@\.]*}{}] [%t] [%c:%L] - %msg%n"></PatternLayout>
+        </File>
+
+        <RollingRandomAccessFile name="RollingRandomAccessFile" fileName="${LOG_PATH}/${LOG_FILE}"
+                                 filePattern="${LOG_PATH}/$${date:yyyy-MM}/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>%d [%-5level] [%replace{%X{PID}}{[A-Za-z@\.]*}{}] [%t] [%c:%L] - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <!-- will roll every 6 hours when the hour is divisible by 6 -->
+                <TimeBasedTriggeringPolicy interval="6" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <!-- A rollover strategy that will keep up to {n} files before removing them. -->
+            <DefaultRolloverStrategy max="20"/>
+        </RollingRandomAccessFile>
+    </Appenders>
+
+    <Loggers>
+        <!--<Logger name="com.budee.uc.user.web" level="TRACE" additivity="false">-->
+            <!--<AppenderRef ref="Console"/>-->
+            <!--<AppenderRef ref="RollingRandomAccessFile"/>-->
+        <!--</Logger>-->
+
+        <Root level="info">
+            <!-- dev -->
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingRandomAccessFile"/>
+
+            <!-- production -->
+            <!--<AppenderRef ref="RollingRandomAccessFile"/>-->
+        </Root>
+    </Loggers>
+</Configuration>

@@ -8,9 +8,9 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.executable.ExecutableValidator;
 import javax.validation.metadata.BeanDescriptor;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author quzile
@@ -55,9 +55,11 @@ public abstract class AbstractValidator extends MessageSourceAdapter {
      * @param <T>     T
      */
     public <T> void hasError(Set<ConstraintViolation<T>> set, String message) {
-        List<FieldErrorResource> resources = new ArrayList<>();
         if (!set.isEmpty()) {
-            set.forEach(source -> resources.add(constraintToResource.convert(source)));
+            List<FieldErrorResource> resources = set
+                    .stream()
+                    .map(constraintToResource::convert)
+                    .collect(Collectors.toList());
             throw new InvalidException(message, resources);
         }
     }
