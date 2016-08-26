@@ -1,11 +1,9 @@
 package org.moonframework.amqp.rabbit.core;
 
-import java.io.Serializable;
-import java.text.MessageFormat;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.moonframework.amqp.rabbit.support.Conversion;
 import org.moonframework.amqp.rabbit.support.PayloadData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
@@ -15,7 +13,9 @@ import org.springframework.retry.RecoveryCallback;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.RetryContext;
 import org.springframework.retry.support.RetryTemplate;
-import org.moonframework.amqp.rabbit.support.Convertion;
+
+import java.io.Serializable;
+import java.text.MessageFormat;
 
 /**
  * <p>
@@ -25,13 +25,12 @@ import org.moonframework.amqp.rabbit.support.Convertion;
  * @author quzile
  * @since 2015-04-05
  */
-public abstract class AbstractProducer<T, E extends Throwable> implements
-        Producer {
+public abstract class AbstractProducer<T, E extends Throwable> implements Producer {
 
     /**
      * logger
      */
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected static Logger logger = LogManager.getLogger(AbstractProducer.class);
 
     /**
      * Rabbit Template
@@ -77,23 +76,17 @@ public abstract class AbstractProducer<T, E extends Throwable> implements
     }
 
     @Override
-    public <M extends Message> void publish(M message,
-                                            CorrelationData correlationData) {
+    public <M extends Message> void publish(M message, CorrelationData correlationData) {
         publish(routingKey, message, correlationData);
     }
 
     @Override
-    public <M extends Message> void publish(String routingKey, M message,
-                                            CorrelationData correlationData) {
+    public <M extends Message> void publish(String routingKey, M message, CorrelationData correlationData) {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Send Message! Exchange:" + exchange
-                        + ", RoutingKey:" + routingKey);
-            }
-            retryTemplate.execute(retry(routingKey, message, correlationData),
-                    recovery());
+            logger.debug(() -> "Send Message! Exchange:" + exchange + ", RoutingKey:" + routingKey);
+            retryTemplate.execute(retry(routingKey, message, correlationData), recovery());
         } catch (Throwable e) {
-            logger.error("publish error!", e);
+            logger.error(() -> "publish error!", e);
         }
     }
 
@@ -147,11 +140,9 @@ public abstract class AbstractProducer<T, E extends Throwable> implements
         return context -> {
             context.setAttribute(MESSAGE, message);
             if (correlationData == null) {
-                rabbitTemplate.send(exchange, routingKey, message,
-                        new PayloadData(message));
+                rabbitTemplate.send(exchange, routingKey, message, new PayloadData(message));
             } else {
-                rabbitTemplate.send(exchange, routingKey, message,
-                        correlationData);
+                rabbitTemplate.send(exchange, routingKey, message, correlationData);
             }
             return doSuccess();
         };
@@ -171,10 +162,10 @@ public abstract class AbstractProducer<T, E extends Throwable> implements
                 // Throwable t = context.getLastThrowable();
                 // Do something with message
                 doRecover(context);
-                logger.info("message recovered successful!");
+                logger.info(() -> "message recovered successful!");
                 return doRecovered();
             } catch (Exception e) {
-                logger.error("message recovered error!", e);
+                logger.error(() -> "message recovered error!", e);
                 return doError();
             }
         };
@@ -190,11 +181,10 @@ public abstract class AbstractProducer<T, E extends Throwable> implements
      * @param message    message
      * @return Message
      */
-    protected <M extends Serializable> Message message(String exchange,
-                                                       String routingKey, M message) {
+    protected <M extends Serializable> Message message(String exchange, String routingKey, M message) {
         try {
             return MessageBuilder
-                    .withBody(Convertion.objectToByteArray(message))
+                    .withBody(Conversion.objectToByteArray(message))
                     .setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN)
                     .setReceivedExchange(exchange)
                     .setReceivedRoutingKey(routingKey).build();

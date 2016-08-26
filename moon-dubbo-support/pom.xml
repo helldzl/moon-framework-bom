@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.moonframework</groupId>
         <artifactId>moon-framework-parent</artifactId>
-        <version>1.0.0</version>
+        <version>2.0.0</version>
         <relativePath>../moon-framework-parent/pom.xml</relativePath>
     </parent>
     <artifactId>moon-dubbo-support</artifactId>
@@ -21,6 +21,7 @@
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
         </dependency>
 
         <dependency>

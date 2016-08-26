@@ -1,9 +1,9 @@
 package org.moonframework.amqp.rabbit.core;
 
-import java.io.Serializable;
-
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.support.CorrelationData;
+
+import java.io.Serializable;
 
 /**
  * @author quzile

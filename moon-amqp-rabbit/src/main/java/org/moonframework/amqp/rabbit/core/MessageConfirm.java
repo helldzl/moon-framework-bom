@@ -1,11 +1,11 @@
 package org.moonframework.amqp.rabbit.core;
 
+import org.moonframework.amqp.rabbit.retry.MessageRecovery;
 import org.moonframework.amqp.rabbit.support.PayloadData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate.ConfirmCallback;
 import org.springframework.amqp.rabbit.support.CorrelationData;
-import org.moonframework.amqp.rabbit.retry.MessageRecovery;
 
 /**
  * <p>
