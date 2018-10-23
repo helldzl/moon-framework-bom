@@ -23,7 +23,7 @@ public class AppConfig {
     @Resource
     Environment env;
 
-    @Bean(name = "dataSource", destroyMethod = "close")
+    @Bean(name = "dataSource")
     @Description("Provides a basic data source of a bean")
     public DataSource dataSource() throws PropertyVetoException {
         // instantiate, configure and return DataSource bean...
