@@ -3,7 +3,7 @@ package ${packageName}.service.impl;
 import ${packageName}.dao.${table.className}Dao;
 import ${packageName}.domain.${table.className};
 import ${packageName}.service.${table.className}Service;
-import org.moonframework.model.mybatis.service.AbstractBaseService;
+import com.jd.asset.mybatis.service.AbstractBaseService;
 import org.springframework.stereotype.Service;
 
 /**

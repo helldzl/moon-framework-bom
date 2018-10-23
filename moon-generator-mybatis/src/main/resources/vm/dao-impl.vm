@@ -2,7 +2,7 @@ package ${packageName}.dao.impl;
 
 import ${packageName}.dao.${table.className}Dao;
 import ${packageName}.domain.${table.className};
-import org.moonframework.model.mybatis.repository.AbstractBaseDao;
+import com.jd.asset.mybatis.repository.AbstractBaseDao;
 import org.springframework.stereotype.Repository;
 
 /**

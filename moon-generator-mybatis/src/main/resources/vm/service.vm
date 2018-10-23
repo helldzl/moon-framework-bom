@@ -1,7 +1,7 @@
 package ${packageName}.service;
 
 import ${packageName}.domain.${table.className};
-import org.moonframework.model.mybatis.service.BaseService;
+import com.jd.asset.mybatis.service.BaseService;
 
 /**
  * @author ${user}
