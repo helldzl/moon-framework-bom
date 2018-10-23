@@ -10,9 +10,9 @@ import java.util.Map;
  */
 public enum DataType {
 
-    TINYINT(Category.NUMERIC, "tinyint", "Integer", "java.lang.Integer", false, "int"),
+    TINYINT(Category.NUMERIC, "tinyint", "Byte", "java.lang.Byte", false, "byte"),
 
-    SMALLINT(Category.NUMERIC, "smallint", "Integer", "java.lang.Integer", false, "int"),
+    SMALLINT(Category.NUMERIC, "smallint", "Short", "java.lang.Short", false, "short"),
 
     MEDIUMINT(Category.NUMERIC, "mediumint", "Integer", "java.lang.Integer", false, "int"),
 
@@ -48,7 +48,9 @@ public enum DataType {
 
     MEDIUMTEXT(Category.STRING, "mediumtext", "String", "java.lang.String", false, "string"),
 
-    LONGTEXT(Category.STRING, "longtext", "String", "java.lang.String", false, "string");
+    LONGTEXT(Category.STRING, "longtext", "String", "java.lang.String", false, "string"),
+
+    ENUM(Category.STRING, "enum", "String", "java.lang.String", false, "string");
 
     private final Category category;
     private final String name;              // 数据库

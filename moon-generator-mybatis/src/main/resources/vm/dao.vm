@@ -1,0 +1,12 @@
+package ${packageName}.dao;
+
+import ${packageName}.domain.${table.className};
+import org.moonframework.model.mybatis.repository.BaseDao;
+
+/**
+ * @author ${user}
+ * @version 1.0
+ * @since ${date}
+ */
+public interface ${table.className}Dao extends BaseDao<${table.className}> {
+}

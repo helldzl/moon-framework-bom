@@ -1,4 +1,4 @@
-package ${packageName};
+package ${packageName}.domain;
 
 #if(${baseClassName})
 import ${baseClassName};

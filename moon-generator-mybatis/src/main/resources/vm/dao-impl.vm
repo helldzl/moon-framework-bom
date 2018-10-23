@@ -1,0 +1,15 @@
+package ${packageName}.dao.impl;
+
+import ${packageName}.dao.${table.className}Dao;
+import ${packageName}.domain.${table.className};
+import org.moonframework.model.mybatis.repository.AbstractBaseDao;
+import org.springframework.stereotype.Repository;
+
+/**
+ * @author ${user}
+ * @version 1.0
+ * @since ${date}
+ */
+@Repository
+public class ${table.className}DaoImpl extends AbstractBaseDao<${table.className}> implements ${table.className}Dao {
+}

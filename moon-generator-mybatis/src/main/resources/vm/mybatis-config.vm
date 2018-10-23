@@ -21,12 +21,12 @@
 
     <!-- user @Alias to rename -->
     <typeAliases>
-        <package name="${packageName}"/>
+        <package name="${packageName}.domain"/>
     </typeAliases>
 
     <mappers>
 #foreach( ${table} in ${tables} )
-        <mapper resource="${directory}/${table.className}Mapper.xml"></mapper>
+        <mapper resource="${directory}/domain/${table.className}Mapper.xml"></mapper>
 #end
     </mappers>
 

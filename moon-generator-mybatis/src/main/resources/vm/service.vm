@@ -1,0 +1,12 @@
+package ${packageName}.service;
+
+import ${packageName}.domain.${table.className};
+import org.moonframework.model.mybatis.service.BaseService;
+
+/**
+ * @author ${user}
+ * @version 1.0
+ * @since ${date}
+ */
+public interface ${table.className}Service extends BaseService<${table.className}> {
+}

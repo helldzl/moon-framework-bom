@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -56,62 +57,65 @@ public class GeneratorService {
     }
 
     public void process(List<Table> list) {
+        Set<String> set = new HashSet<>(Arrays.asList(excludes.split(",")));
         for (Table table : list) {
-            process(table, path, packageName);
+            process(table, "dao", true);
+            process(table, "dao.impl", true);
+            process(table, "service", true);
+            process(table, "service.impl", true);
+
+            process(table, "domain", false, context -> {
+                // filter and set imports
+                List<Column> columns = filter(table, set);
+                table.setImports(columns);
+                context.put("columns", columns);
+
+                // random
+                context.put("serial", random.nextLong());
+                if (baseClassName != null && !"".equals(baseClassName)) {
+                    context.put("baseClassName", baseClassName); // 使用全限定名称
+                    context.put("parentClass", baseClassName.substring(baseClassName.lastIndexOf(".") + 1));
+                }
+            });
             process(table, path);
         }
         process(list, path);
     }
 
-    /**
-     * 处理实体文件
-     *
-     * @param table
-     * @param path
-     * @param packageName
-     */
-    public void process(Table table, String path, String packageName) {
+    private void process(Table table, String subPackage, boolean convert) {
+        process(table, subPackage, convert, null);
+    }
+
+    private void process(Table table, String suffix, boolean convert, Consumer<VelocityContext> consumer) {
         VelocityFactory factory = VelocityFactory.getInstance();
         VelocityContext context = new VelocityContext();
 
-        // filter and set imports
-        List<Column> columns = filter(table, new HashSet<>(Arrays.asList(excludes.split(","))));
-        table.setImports(columns);
-
-        // user and date
         context.put("user", System.getProperty("user.name"));
         context.put("date", dateFormat());
-
-        // table details
         context.put("table", table);
         context.put("packageName", packageName);
-        context.put("columns", columns);
 
-        // random
-        context.put("serial", random.nextLong());
-        if (baseClassName != null && !"".equals(baseClassName)) {
-            context.put("baseClassName", baseClassName); // 使用全限定名称
-            context.put("parentClass", baseClassName.substring(baseClassName.lastIndexOf(".") + 1));
-        }
+        if (consumer != null)
+            consumer.accept(context);
 
-        //
-        String filepath = filepath(path, packageName);
-        File file = new File(new File(filepath), table.getClassName() + ".java");
-        factory.generate(context, "/vm/entity.vm", file);
+        String filepath = filepath(path, packageName + "." + suffix);
+        String format = String.format("%s%s%s", table.getClassName(), convert ? apply(suffix) : "", ".java");
+        File file = new File(new File(filepath), format);
+        factory.generate(context, String.format("/vm/%s.vm", suffix.replaceAll("\\.", "-")), file);
     }
 
     /**
      * 处理映射文件
      *
-     * @param table
-     * @param path
+     * @param table table
+     * @param path  path
      */
     private void process(Table table, String path) {
         VelocityFactory factory = VelocityFactory.getInstance();
         VelocityContext context = new VelocityContext();
 
         context.put("table", table);
-        context.put("namespace", packageName + "." + table.getClassName());
+        context.put("namespace", packageName + ".domain." + table.getClassName());
 
         File file = new File(path, table.getClassName() + "Mapper.xml");
         factory.generate(context, "/vm/mapper.vm", file);
@@ -120,8 +124,8 @@ public class GeneratorService {
     /**
      * 处理配置文件
      *
-     * @param list
-     * @param path
+     * @param list list
+     * @param path path
      */
     private void process(List<Table> list, String path) {
         VelocityFactory factory = VelocityFactory.getInstance();
@@ -148,6 +152,15 @@ public class GeneratorService {
 
     private String filepath(String path, String packageName) {
         return path + File.separator + packageName.replace(".", File.separator);
+    }
+
+    private String apply(String s) {
+        char[] chars = s.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        sb.append(Character.toUpperCase(chars[0]));
+        for (int i = 1; i < chars.length; i++)
+            sb.append(chars[i] == '.' ? Character.toUpperCase(chars[++i]) : chars[i]);
+        return sb.toString();
     }
 
 }

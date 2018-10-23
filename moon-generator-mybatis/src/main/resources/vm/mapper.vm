@@ -39,11 +39,31 @@
         </trim>
     </sql>
 
+    <sql id="insertEntityColumns">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+            <if test="insert.${column.fieldName} != null">
+                ${column.columnName},
+            </if>
+#end
+        </trim>
+    </sql>
+
     <sql id="insertValues">
         <trim suffixOverrides=",">
 #foreach(${column} in ${table.columns})
             <if test="${column.fieldName} != null">
                 #{${column.fieldName}},
+            </if>
+#end
+        </trim>
+    </sql>
+
+    <sql id="insertEntityValues">
+        <trim suffixOverrides=",">
+#foreach(${column} in ${table.columns})
+            <if test="insert.${column.fieldName} != null">
+                #{insert.${column.fieldName}},
             </if>
 #end
         </trim>
@@ -103,9 +123,22 @@
         LIMIT #{offset}, #{pageSize}
     </sql>
 
+    <sql id="relationships">
+        <if test="relationships != null">
+            <foreach collection="relationships" item="join" index="index">
+                ${join.type()} ${join.table()} ON ${join.condition()}
+            </foreach>
+        </if>
+    </sql>
+
     <!-- insert -->
     <insert id="save" parameterType="${namespace}" keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ${table.tableName}(<include refid="insertColumns"/>) VALUES (<include refid="insertValues"/>)
+    </insert>
+
+    <!-- insert into on duplicate -->
+    <insert id="insertOnDuplicate" parameterType="${namespace}" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO ${table.tableName}(<include refid="insertEntityColumns"/>) VALUES (<include refid="insertEntityValues"/>) ON DUPLICATE KEY UPDATE <include refid="updateValuesByCriterion"/>
     </insert>
 
     <!-- insert into on duplicate -->
@@ -127,6 +160,22 @@
         UPDATE ${table.tableName} SET <include refid="updateValuesByCriterion"/> WHERE id = #{entity.id} AND <include refid="criterion"></include>
     </update>
 
+    <update id="updateByMap" parameterType="map">
+        UPDATE ${table.tableName}
+        <trim prefix="SET" suffixOverrides=",">
+            <foreach collection="increments" index="index" item="item">
+                ${item.key} = ${item.key} + #{item.value},
+            </foreach>
+            <foreach collection="fields" index="index" item="item">
+                ${item.key} = #{item.value},
+            </foreach>
+        </trim>
+        WHERE id = #{id}
+        <if test="conditions != null">
+            AND <include refid="criterion"></include>
+        </if>
+    </update>
+
     <!-- select -->
     <select id="findOne" parameterType="map" resultMap="${table.refClassName}">
         SELECT
@@ -138,6 +187,12 @@
         SELECT
         <include refid="columns"></include>
         FROM ${table.tableName} <include refid="simpleConditions"></include>
+    </select>
+
+    <select id="findOneByCriterion" parameterType="map" resultMap="${table.refClassName}">
+        SELECT
+        <include refid="columns"></include>
+        FROM ${table.tableName} WHERE <include refid="criterion"></include> LIMIT 1
     </select>
 
     <select id="findAll" parameterType="map" resultMap="${table.refClassName}">
@@ -170,7 +225,9 @@
     <select id="findPageByCriterion" parameterType="map" resultMap="${table.refClassName}">
         SELECT
         <include refid="columns"></include>
-        FROM ${table.tableName} WHERE <include refid="criterion"></include> <include refid="sort"></include> <include refid="limit"></include>
+        FROM ${table.tableName}
+        <include refid="relationships"></include>
+        WHERE <include refid="criterion"></include> <include refid="sort"></include> <include refid="limit"></include>
     </select>
 
     <select id="count" resultType="long">
@@ -182,7 +239,9 @@
     </select>
 
     <select id="countByCriterion" parameterType="map" resultType="long">
-        SELECT COUNT(*) FROM ${table.tableName} WHERE <include refid="criterion"></include>
+        SELECT COUNT(*) FROM ${table.tableName}
+        <include refid="relationships"></include>
+        WHERE <include refid="criterion"></include>
     </select>
 
     <select id="exists" parameterType="long" resultType="long">
